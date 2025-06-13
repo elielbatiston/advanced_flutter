@@ -33,11 +33,13 @@ class LoadNextEventSpyRepository implements LoadNextEventRepository {
   String? groupId;
   var callsCount = 0;
   NextEvent? output;
+  Error? error;
 
   @override
   Future<NextEvent> loadNextEvent({required String groupId}) async {
     this.groupId = groupId;
     callsCount++;
+    if (error != null) throw error!;
     return output!;
   }
 }
@@ -59,16 +61,16 @@ void main() {
           name: 'any name 1',
           isConfirmed: true,
           photo: 'any photo 1',
-          confirmationDate: DateTime.now()
+          confirmationDate: DateTime.now(),
         ),
         NextEventPlayer(
           id: 'any id 2',
           name: 'any name 2',
           isConfirmed: false,
           position: 'any position 2',
-          confirmationDate: DateTime.now()
+          confirmationDate: DateTime.now(),
         ),
-      ]
+      ],
     );
     sut = NextEventLoader(repo: repo);
   });
@@ -89,12 +91,25 @@ void main() {
     expect(event.players[0].initials, isNotEmpty);
     expect(event.players[0].photo, repo.output?.players[0].photo);
     expect(event.players[0].isConfirmed, repo.output?.players[0].isConfirmed);
-    expect(event.players[0].confirmationDate, repo.output?.players[0].confirmationDate);
+    expect(
+      event.players[0].confirmationDate,
+      repo.output?.players[0].confirmationDate,
+    );
     expect(event.players[1].id, repo.output?.players[1].id);
     expect(event.players[1].name, repo.output?.players[1].name);
     expect(event.players[1].initials, isNotEmpty);
     expect(event.players[1].position, repo.output?.players[1].position);
     expect(event.players[1].isConfirmed, repo.output?.players[1].isConfirmed);
-    expect(event.players[1].confirmationDate, repo.output?.players[1].confirmationDate);
+    expect(
+      event.players[1].confirmationDate,
+      repo.output?.players[1].confirmationDate,
+    );
+  });
+
+  test('should rethrow on error', () async {
+    final error = Error();
+    repo.error = error;
+    final future = sut(groupId: groupId);
+    expect(future, throwsA(error));
   });
 }
