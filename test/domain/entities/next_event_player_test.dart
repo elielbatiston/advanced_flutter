@@ -39,7 +39,7 @@ class NextEventPlayer {
   );
 
   static String _getInitials(String name) {
-    final names = name.toUpperCase().split(' ');
+    final names = name.toUpperCase().trim().split(' ');
     final firstChar = names.first.split('').firstOrNull ?? '-';
     final lastChar = names.last.split('').elementAtOrNull(names.length == 1 ? 1 : 0) ?? '';
     return '$firstChar$lastChar';
@@ -69,5 +69,16 @@ void main() {
     expect(initialsOf('eliel batiston'), 'EB');
     expect(initialsOf('pedro'), 'PE');
     expect(initialsOf('e'), 'E');
+  });
+
+  test('should ignore extra whitespaces', () {
+    expect(initialsOf('Eliel Batiston '), 'EB');
+    expect(initialsOf(' Eliel Batiston'), 'EB');
+    expect(initialsOf('Eliel  Batiston'), 'EB');
+    expect(initialsOf(' Eliel  Batiston '), 'EB');
+    expect(initialsOf(' Eliel '), 'EL');
+    expect(initialsOf(' E '), 'E');
+    expect(initialsOf(' '), '-');
+    expect(initialsOf('  '), '-');
   });
 }
