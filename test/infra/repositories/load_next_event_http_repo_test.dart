@@ -30,6 +30,8 @@ class LoadNextEventHttpRepository implements LoadNextEventRepository {
       throw DomainError.unexpected;
     } else if (response.statusCode == 403) {
       throw DomainError.unexpected;
+    } else if (response.statusCode == 404) {
+      throw DomainError.unexpected;
     }
     final event = jsonDecode(response.body);
     return NextEvent(
@@ -213,6 +215,12 @@ void main() {
 
   test('should throw UnexpectedError on 403', () async {
     httpClient.statusCode = 400;
+    final future = sut.loadNextEvent(groupId: groupId);
+    expect(future, throwsA(DomainError.unexpected));
+  });
+
+  test('should throw UnexpectedError on 404', () async {
+    httpClient.statusCode = 404;
     final future = sut.loadNextEvent(groupId: groupId);
     expect(future, throwsA(DomainError.unexpected));
   });
