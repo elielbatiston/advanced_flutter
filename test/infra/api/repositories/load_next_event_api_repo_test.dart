@@ -9,14 +9,11 @@ class LoadNextEventApiRepository implements LoadNextEventRepository {
   final HttpGetClient httpClient;
   final String url;
 
-  LoadNextEventApiRepository({
-    required this.httpClient,
-    required this.url
-  });
+  LoadNextEventApiRepository({required this.httpClient, required this.url});
 
   @override
   Future<NextEvent> loadNextEvent({required String groupId}) async {
-    final event = await httpClient.get(url: url, params: { "groupId": groupId });
+    final event = await httpClient.get(url: url, params: {"groupId": groupId});
     return NextEvent(
       groupName: event['groupName'],
       date: DateTime.parse(event['date']),
@@ -47,12 +44,17 @@ class HttpGetClientSpy implements HttpGetClient {
   int callsCount = 0;
   Map<String, String>? params;
   dynamic response;
+  Error? error;
 
   @override
-  Future<dynamic> get({required String url, Map<String, String>? params}) async {
+  Future<dynamic> get({
+    required String url,
+    Map<String, String>? params,
+  }) async {
     this.url = url;
     this.params = params;
     callsCount++;
+    if (error != null) throw error!;
     return response;
   }
 }
@@ -71,20 +73,16 @@ void main() {
       "groupName": "any_name",
       "date": "2024-08-30T10:30",
       "players": [
-        {
-          "id": "id 1",
-          "name": "name 1",
-          "isConfirmed": true
-        },
+        {"id": "id 1", "name": "name 1", "isConfirmed": true},
         {
           "id": "id 2",
           "name": "name 2",
           "position": "position 2",
           "photo": "photo 2",
           "isConfirmed": false,
-          "confirmationDate": "2024-08-29T11:00"
-        }
-      ]
+          "confirmationDate": "2024-08-29T11:00",
+        },
+      ],
     };
     sut = LoadNextEventApiRepository(httpClient: httpClient, url: url);
   });
@@ -109,5 +107,12 @@ void main() {
     expect(event.players[1].photo, 'photo 2');
     expect(event.players[1].isConfirmed, false);
     expect(event.players[1].confirmationDate, DateTime(2024, 8, 29, 11, 0));
+  });
+
+  test('should rethrow on error', () async {
+    final error = Error();
+    httpClient.error = error;
+    final future = sut.loadNextEvent(groupId: groupId);
+    expect(future, throwsA(error));
   });
 }
