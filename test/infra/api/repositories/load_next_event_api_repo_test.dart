@@ -1,13 +1,11 @@
 import 'package:advanced_flutter/domain/entities/next_event.dart';
 import 'package:advanced_flutter/domain/entities/next_event_player.dart';
 import 'package:advanced_flutter/domain/repositories/load_next_event_repo.dart';
+import 'package:advanced_flutter/infra/types/api.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../helpers/fakers.dart';
-
-typedef Json = Map<String, dynamic>;
-typedef JsonArr = List<Json>;
 
 class LoadNextEventApiRepository implements LoadNextEventRepository {
   final HttpGetClient httpClient;
