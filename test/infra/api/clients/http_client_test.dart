@@ -21,47 +21,26 @@ class HttpClient {
     Map<String, String?>? params,
     Map<String, String>? queryString,
   }) async {
-    final allHeaders = (headers ?? {})
-      ..addAll({
-        'content-type': 'application/json',
-        'accept': 'application/json',
-      });
+    final allHeaders = (headers ?? {})..addAll({ 'content-type': 'application/json','accept': 'application/json' });
     final uri = _buildUri(url: url, params: params, queryString: queryString);
     final response = await client.get(uri, headers: allHeaders);
     switch (response.statusCode) {
-      case 200:
-        {
-          if (response.body.isEmpty) return null;
-          final data = jsonDecode(response.body);
-          return (T == JsonArr)
-              ? data.map<Json>((e) => e as Json).toList()
-              : data;
-        }
-      case 401:
-        throw DomainError.sessionExpiredError;
-      default:
-        throw DomainError.unexpected;
+      case 200: {
+        if (response.body.isEmpty) return null;
+        final data = jsonDecode(response.body);
+        return (T == JsonArr)
+            ? data.map<Json>((e) => e as Json).toList()
+            : data;
+      }
+      case 204: return null;
+      case 401: throw DomainError.sessionExpiredError;
+      default: throw DomainError.unexpected;
     }
   }
 
-  Uri _buildUri({
-    required String url,
-    Map<String, String?>? params,
-    Map<String, String?>? queryString,
-  }) {
-    url =
-        params?.keys
-            .fold(
-              url,
-              (result, key) => result.replaceFirst(':$key', params[key] ?? ''),
-            )
-            .removeSuffix('/') ??
-        url;
-    url =
-        queryString?.keys
-            .fold('$url?', (result, key) => '$result$key=${queryString[key]}&')
-            .removeSuffix('&') ??
-        url;
+  Uri _buildUri({ required String url, Map<String, String?>? params, Map<String, String?>? queryString }) {
+    url = params?.keys.fold(url,(result, key) => result.replaceFirst(':$key', params[key] ?? '')).removeSuffix('/') ?? url;
+    url =queryString?.keys.fold('$url?', (result, key) => '$result$key=${queryString[key]}&').removeSuffix('&') ?? url;
     return Uri.parse(url);
   }
 }
@@ -216,6 +195,12 @@ void main() {
 
     test('should return null on 200 with empty response', () async {
       client.responseJson = '';
+      final data = await sut.get(url: url);
+      expect(data, isNull);
+    });
+
+    test('should return null on 204', () async {
+      client.simulateNoContent();
       final data = await sut.get(url: url);
       expect(data, isNull);
     });
