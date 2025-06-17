@@ -214,5 +214,6 @@ void main() {
     await tester.pump();
     expect(find.text('DENTRO - GOLEIROS'), findsNothing);
     expect(find.text('DENTRO - JOGADORES'), findsNothing);
+    expect(find.text('FORA'), findsNothing);
   });
 }
