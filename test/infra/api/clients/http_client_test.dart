@@ -21,22 +21,46 @@ class HttpClient {
     Map<String, String?>? params,
     Map<String, String>? queryString,
   }) async {
-    final allHeaders = (headers ?? {})..addAll({ 'content-type': 'application/json', 'accept': 'application/json' });
+    final allHeaders = (headers ?? {})
+      ..addAll({
+        'content-type': 'application/json',
+        'accept': 'application/json',
+      });
     final uri = _buildUri(url: url, params: params, queryString: queryString);
     final response = await client.get(uri, headers: allHeaders);
     switch (response.statusCode) {
-      case 200: {
-        final data = jsonDecode(response.body);
-        return (T == JsonArr) ? data.map<Json>((e) => e as Json).toList() : data;
-      }
-      case 401: throw DomainError.sessionExpiredError;
-      default: throw DomainError.unexpected;
+      case 200:
+        {
+          final data = jsonDecode(response.body);
+          return (T == JsonArr)
+              ? data.map<Json>((e) => e as Json).toList()
+              : data;
+        }
+      case 401:
+        throw DomainError.sessionExpiredError;
+      default:
+        throw DomainError.unexpected;
     }
   }
 
-  Uri _buildUri({ required String url, Map<String, String?>? params, Map<String, String?>? queryString }) {
-    url = params?.keys.fold(url, (result, key) => result.replaceFirst(':$key', params[key] ?? '')).removeSuffix('/') ?? url;
-    url = queryString?.keys.fold('$url?', (result, key) => '$result$key=${queryString[key]}&').removeSuffix('&') ?? url;
+  Uri _buildUri({
+    required String url,
+    Map<String, String?>? params,
+    Map<String, String?>? queryString,
+  }) {
+    url =
+        params?.keys
+            .fold(
+              url,
+              (result, key) => result.replaceFirst(':$key', params[key] ?? ''),
+            )
+            .removeSuffix('/') ??
+        url;
+    url =
+        queryString?.keys
+            .fold('$url?', (result, key) => '$result$key=${queryString[key]}&')
+            .removeSuffix('&') ??
+        url;
     return Uri.parse(url);
   }
 }
@@ -84,7 +108,7 @@ void main() {
 
     test('should request with invalid params', () async {
       url = 'http://anyurl.com/:p1/:p2';
-      await sut.get(url: url, params: { 'p3': 'v3' });
+      await sut.get(url: url, params: {'p3': 'v3'});
       expect(client.url, "http://anyurl.com/:p1/:p2");
     });
 
@@ -95,7 +119,11 @@ void main() {
 
     test('should request with correct queryStrings and params', () async {
       url = 'http://anyurl.com/:p3/:p4';
-      await sut.get(url: url, queryString: {'q1': 'v1', 'q2': 'v2'}, params: {'p3': 'v3', 'p4': 'v4'});
+      await sut.get(
+        url: url,
+        queryString: {'q1': 'v1', 'q2': 'v2'},
+        params: {'p3': 'v3', 'p4': 'v4'},
+      );
       expect(client.url, 'http://anyurl.com/v3/v4?q1=v1&q2=v2');
     });
 
@@ -163,6 +191,26 @@ void main() {
       final data = await sut.get<JsonArr>(url: url);
       expect(data[0]['key'], 'value1');
       expect(data[1]['key'], 'value2');
+    });
+
+    test('should return a Map with List', () async {
+      client.responseJson = '''
+        {
+          "key1": "value1",
+          "key2": [
+            {
+              "key": "value1"
+            },
+            {
+              "key": "value2"
+            }
+          ]
+        }
+      ''';
+      final data = await sut.get<Json>(url: url);
+      expect(data['key1'], 'value1');
+      expect(data['key2'][0]['key'], 'value1');
+      expect(data['key2'][1]['key'], 'value2');
     });
   });
 }
