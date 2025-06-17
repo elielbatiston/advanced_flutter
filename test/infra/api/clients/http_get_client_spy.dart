@@ -1,5 +1,5 @@
 import 'package:advanced_flutter/infra/api/clients/http_get_client.dart';
-import 'package:advanced_flutter/infra/types/api.dart';
+import 'package:advanced_flutter/infra/types/json.dart';
 
 class HttpGetClientSpy implements HttpGetClient {
   String? url;

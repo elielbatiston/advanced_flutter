@@ -3,7 +3,7 @@ import 'package:advanced_flutter/domain/entities/next_event.dart';
 import 'package:advanced_flutter/domain/repositories/load_next_event_repo.dart';
 import 'package:advanced_flutter/infra/api/clients/http_get_client.dart';
 import 'package:advanced_flutter/infra/api/mappers/next_event_mapper.dart';
-import 'package:advanced_flutter/infra/types/api.dart';
+import 'package:advanced_flutter/infra/types/json.dart';
 
 class LoadNextEventApiRepository implements LoadNextEventRepository {
   final HttpGetClient httpClient;
