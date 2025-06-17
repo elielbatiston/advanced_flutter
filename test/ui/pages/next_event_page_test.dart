@@ -6,8 +6,12 @@ import '../../helpers/fakers.dart';
 
 final class NextEventViewModel {
   final List<NextEventPlayerViewModel> goalkeepers;
+  final List<NextEventPlayerViewModel> players;
 
-  const NextEventViewModel({this.goalkeepers = const []});
+  const NextEventViewModel({
+    this.goalkeepers = const [],
+    this.players = const []
+  });
 }
 
 final class NextEventPlayerViewModel {
@@ -48,7 +52,8 @@ class _NextEventPageState extends State<NextEventPage> {
           final viewModel = snapshot.data!;
           return ListView(
             children: [
-              if (viewModel.goalkeepers.isNotEmpty) ListSection(title: 'DENTRO - GOLEIROS', items: viewModel.goalkeepers)
+              if (viewModel.goalkeepers.isNotEmpty) ListSection(title: 'DENTRO - GOLEIROS', items: viewModel.goalkeepers),
+              if (viewModel.players.isNotEmpty) ListSection(title: 'DENTRO - JOGADORES', items: viewModel.players)
             ],
           );
         },
@@ -96,10 +101,8 @@ final class NextEventPresenterSpy implements NextEventPresenter {
     nextEventSubject.add(viewModel ?? const NextEventViewModel());
   }
 
-  void emitNextEventWith({
-    List<NextEventPlayerViewModel> goalkeepers = const [],
-  }) {
-    nextEventSubject.add(NextEventViewModel(goalkeepers: goalkeepers));
+  void emitNextEventWith({ List<NextEventPlayerViewModel> goalkeepers = const [], List<NextEventPlayerViewModel> players = const [] }) {
+    nextEventSubject.add(NextEventViewModel(goalkeepers: goalkeepers, players: players));
   }
 
   void emitError() {
@@ -155,15 +158,28 @@ void main() {
 
   testWidgets('should present goalkeepers section', (tester) async {
     await tester.pumpWidget(sut);
-    presenter.emitNextEventWith(
-      goalkeepers: const [
-        NextEventPlayerViewModel(name: 'Rodrigo'),
-        NextEventPlayerViewModel(name: 'Rafael'),
-        NextEventPlayerViewModel(name: 'Pedro'),
-      ],
-    );
+    presenter.emitNextEventWith(goalkeepers: const [
+      NextEventPlayerViewModel(name: 'Rodrigo'),
+      NextEventPlayerViewModel(name: 'Rafael'),
+      NextEventPlayerViewModel(name: 'Pedro')
+    ]);
     await tester.pump();
     expect(find.text('DENTRO - GOLEIROS'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('Rodrigo'), findsOneWidget);
+    expect(find.text('Rafael'), findsOneWidget);
+    expect(find.text('Pedro'), findsOneWidget);
+  });
+
+  testWidgets('should present players section', (tester) async {
+    await tester.pumpWidget(sut);
+    presenter.emitNextEventWith(players: const [
+      NextEventPlayerViewModel(name: 'Rodrigo'),
+      NextEventPlayerViewModel(name: 'Rafael'),
+      NextEventPlayerViewModel(name: 'Pedro')
+    ]);
+    await tester.pump();
+    expect(find.text('DENTRO - JOGADORES'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('Rodrigo'), findsOneWidget);
     expect(find.text('Rafael'), findsOneWidget);
