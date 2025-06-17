@@ -44,27 +44,27 @@ void main() {
 
     test('should request with optional param', () async {
       url = 'http://anyurl.com/:p1/:p2';
-      await sut.get(url: url, params: {'p1': 'v1', 'p2': null});
+      await sut.get(url: url, params: { 'p1': 'v1', 'p2': null });
       expect(client.url, "http://anyurl.com/v1");
     });
 
     test('should request with invalid params', () async {
       url = 'http://anyurl.com/:p1/:p2';
-      await sut.get(url: url, params: {'p3': 'v3'});
+      await sut.get(url: url, params: { 'p3': 'v3' });
       expect(client.url, "http://anyurl.com/:p1/:p2");
     });
 
     test('should request with correct queryStrings', () async {
-      await sut.get(url: url, queryString: {'q1': 'v1', 'q2': 'v2'});
-      expect(client.url, '$url?q1=v1&q2=v2');
+      await sut.get(url: url, queryString: { 'q1': 'v1', 'q2': 'v2', 'q3': 123 });
+      expect(client.url, '$url?q1=v1&q2=v2&q3=123');
     });
 
     test('should request with correct queryStrings and params', () async {
       url = 'http://anyurl.com/:p3/:p4';
       await sut.get(
         url: url,
-        queryString: {'q1': 'v1', 'q2': 'v2'},
-        params: {'p3': 'v3', 'p4': 'v4'},
+        queryString: { 'q1': 'v1', 'q2': 'v2' },
+        params: { 'p3': 'v3', 'p4': 'v4' },
       );
       expect(client.url, 'http://anyurl.com/v3/v4?q1=v1&q2=v2');
     });
