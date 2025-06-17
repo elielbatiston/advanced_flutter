@@ -51,8 +51,7 @@ class _NextEventPageState extends State<NextEventPage> {
       body: StreamBuilder<NextEventViewModel>(
         stream: widget.presenter.nextEventStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.active)
-            return const CircularProgressIndicator();
+          if (snapshot.connectionState != ConnectionState.active) return const CircularProgressIndicator();
           if (snapshot.hasError) return const SizedBox();
           final viewModel = snapshot.data!;
           return ListView(
@@ -244,5 +243,6 @@ void main() {
     expect(find.text('DENTRO - GOLEIROS'), findsNothing);
     expect(find.text('DENTRO - JOGADORES'), findsNothing);
     expect(find.text('FORA'), findsNothing);
+    expect(find.text('DÚVIDA'), findsNothing);
   });
 }
