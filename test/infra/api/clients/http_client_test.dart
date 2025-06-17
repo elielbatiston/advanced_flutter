@@ -1,3 +1,5 @@
+import 'package:advanced_flutter/domain/entities/domain_error.dart';
+
 import 'package:dartx/dartx.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
@@ -18,7 +20,11 @@ class HttpClient {
   }) async {
     final allHeaders = (headers ?? {})..addAll({ 'content-type': 'application/json', 'accept': 'application/json' });
     final uri = _buildUri(url: url, params: params, queryString: queryString);
-    await client.get(uri, headers: allHeaders);
+    final response = await client.get(uri, headers: allHeaders);
+    switch (response.statusCode) {
+      case 200: break;
+      default: throw DomainError.unexpected;
+    }
   }
 
   Uri _buildUri({ required String url, Map<String, String?>? params, Map<String, String?>? queryString }) {
@@ -93,5 +99,11 @@ void main() {
       expect(client.headers?['h1'], 'value1');
       expect(client.headers?['h2'], 'value2');
     });
+
+    test('should throw UnexpectedError on 400', () async {
+    client.simulateBadRequestError();
+    final future = sut.get(url: url);
+    expect(future, throwsA(DomainError.unexpected));
+  });
   });
 }
