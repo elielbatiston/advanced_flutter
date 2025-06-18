@@ -12,6 +12,7 @@ import '../../helpers/fakers.dart';
 
 final class NextEventPresenterSpy implements NextEventPresenter {
   int loadCallsCount = 0;
+  int reloadCallsCount = 0;
   String? groupId;
   var nextEventSubject = BehaviorSubject<NextEventViewModel>();
 
@@ -28,12 +29,14 @@ final class NextEventPresenterSpy implements NextEventPresenter {
     List<NextEventPlayerViewModel> out = const [],
     List<NextEventPlayerViewModel> doubt = const [],
   }) {
-    nextEventSubject.add(NextEventViewModel(
-      goalkeepers: goalkeepers,
-      players: players,
-      out: out,
-      doubt: doubt,
-    ));
+    nextEventSubject.add(
+      NextEventViewModel(
+        goalkeepers: goalkeepers,
+        players: players,
+        out: out,
+        doubt: doubt,
+      ),
+    );
   }
 
   void emitError() {
@@ -41,8 +44,14 @@ final class NextEventPresenterSpy implements NextEventPresenter {
   }
 
   @override
-  void loadNextEvent({required String groupId}) {
+  void loadNextEvent({ required String groupId }) {
     loadCallsCount++;
+    this.groupId = groupId;
+  }
+
+  @override
+  void reloadNextEvent({ required String groupId }) {
+    reloadCallsCount++;
     this.groupId = groupId;
   }
 }
@@ -55,7 +64,9 @@ void main() {
   setUp(() {
     presenter = NextEventPresenterSpy();
     groupId = anyString();
-    sut = MaterialApp(home: NextEventPage(presenter: presenter, groupId: groupId));
+    sut = MaterialApp(
+      home: NextEventPage(presenter: presenter, groupId: groupId),
+    );
   });
 
   testWidgets('should load event data on page init', (tester) async {
@@ -87,11 +98,13 @@ void main() {
 
   testWidgets('should present goalkeepers section', (tester) async {
     await tester.pumpWidget(sut);
-    presenter.emitNextEventWith(goalkeepers: [
-      NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Pedro', initials: anyString())
-    ]);
+    presenter.emitNextEventWith(
+      goalkeepers: [
+        NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
+      ],
+    );
     await tester.pump();
     expect(find.text('DENTRO - GOLEIROS'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
@@ -105,11 +118,13 @@ void main() {
 
   testWidgets('should present players section', (tester) async {
     await tester.pumpWidget(sut);
-    presenter.emitNextEventWith(players: [
-      NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
-    ]);
+    presenter.emitNextEventWith(
+      players: [
+        NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
+      ],
+    );
     await tester.pump();
     expect(find.text('DENTRO - JOGADORES'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
@@ -123,11 +138,13 @@ void main() {
 
   testWidgets('should present out section', (tester) async {
     await tester.pumpWidget(sut);
-    presenter.emitNextEventWith(out: [
-      NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
-    ]);
+    presenter.emitNextEventWith(
+      out: [
+        NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
+      ],
+    );
     await tester.pump();
     expect(find.text('FORA'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
@@ -141,11 +158,13 @@ void main() {
 
   testWidgets('should present doubt section', (tester) async {
     await tester.pumpWidget(sut);
-    presenter.emitNextEventWith(doubt: [
-      NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
-      NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
-    ]);
+    presenter.emitNextEventWith(
+      doubt: [
+        NextEventPlayerViewModel(name: 'Rodrigo', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Rafael', initials: anyString()),
+        NextEventPlayerViewModel(name: 'Pedro', initials: anyString()),
+      ],
+    );
     await tester.pump();
     expect(find.text('DÚVIDA'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
@@ -181,7 +200,19 @@ void main() {
     expect(find.byType(PlayerPosition), findsNothing);
     expect(find.byType(PlayerStatus), findsNothing);
     expect(find.byType(PlayerPhoto), findsNothing);
-    expect(find.text('Algo errado aconteceu, tente novamente.'), findsOneWidget);
+    expect(
+      find.text('Algo errado aconteceu, tente novamente.'),
+      findsOneWidget,
+    );
     expect(find.text('Recarregar'), findsOneWidget);
+  });
+
+  testWidgets('should load event data on reload click', (tester) async {
+    await tester.pumpWidget(sut);
+    presenter.emitError();
+    await tester.pump();
+    await tester.tap(find.text('Recarregar'));
+    expect(presenter.reloadCallsCount, 1);
+    expect(presenter.groupId, groupId);
   });
 }
