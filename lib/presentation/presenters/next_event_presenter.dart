@@ -13,12 +13,16 @@ final class NextEventViewModel {
     this.goalkeepers = const [],
     this.players = const [],
     this.out = const [],
-    this.doubt = const []
+    this.doubt = const [],
   });
 }
 
 final class NextEventPlayerViewModel {
   final String name;
+  final String? position;
 
-  const NextEventPlayerViewModel({required this.name});
+  const NextEventPlayerViewModel({
+    required this.name,
+    this.position
+  });
 }
