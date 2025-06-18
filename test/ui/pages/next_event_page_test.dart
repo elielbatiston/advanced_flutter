@@ -15,9 +15,13 @@ final class NextEventPresenterSpy implements NextEventPresenter {
   int reloadCallsCount = 0;
   String? groupId;
   var nextEventSubject = BehaviorSubject<NextEventViewModel>();
+  var isBusySubject = BehaviorSubject<bool>();
 
   @override
   Stream<NextEventViewModel> get nextEventStream => nextEventSubject.stream;
+
+  @override
+  Stream<bool> get isBusyStream => isBusySubject.stream;
 
   void emitNextEvent([NextEventViewModel? viewModel]) {
     nextEventSubject.add(viewModel ?? const NextEventViewModel());
@@ -43,14 +47,18 @@ final class NextEventPresenterSpy implements NextEventPresenter {
     nextEventSubject.addError(Error());
   }
 
+  void emitIsBusy([bool isBusy = true]) {
+    isBusySubject.add(isBusy);
+  }
+
   @override
-  void loadNextEvent({ required String groupId }) {
+  void loadNextEvent({required String groupId}) {
     loadCallsCount++;
     this.groupId = groupId;
   }
 
   @override
-  void reloadNextEvent({ required String groupId }) {
+  void reloadNextEvent({required String groupId}) {
     reloadCallsCount++;
     this.groupId = groupId;
   }
@@ -214,5 +222,17 @@ void main() {
     await tester.tap(find.text('Recarregar'));
     expect(presenter.reloadCallsCount, 1);
     expect(presenter.groupId, groupId);
+  });
+
+  testWidgets('should handle spinner on page busy event', (tester) async {
+    await tester.pumpWidget(sut);
+    presenter.emitError();
+    await tester.pump();
+    presenter.emitIsBusy();
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    presenter.emitIsBusy(false);
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }
