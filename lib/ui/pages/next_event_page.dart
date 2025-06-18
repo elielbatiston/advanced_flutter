@@ -38,8 +38,7 @@ class _NextEventPageState extends State<NextEventPage> {
     children: [
       const Text('Algo errado aconteceu, tente novamente.'),
       ElevatedButton(
-        onPressed: () =>
-            widget.presenter.reloadNextEvent(groupId: widget.groupId),
+        onPressed: () => widget.presenter.reloadNextEvent(groupId: widget.groupId),
         child: const Text('Recarregar'),
       ),
     ],
@@ -51,27 +50,19 @@ class _NextEventPageState extends State<NextEventPage> {
       body: StreamBuilder<NextEventViewModel>(
         stream: widget.presenter.nextEventStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.active)
-            return const CircularProgressIndicator();
+          if (snapshot.connectionState != ConnectionState.active) return const CircularProgressIndicator();
           if (snapshot.hasError) return buildErrorLayout();
           final viewModel = snapshot.data!;
-          return ListView(
-            children: [
-              if (viewModel.goalkeepers.isNotEmpty)
-                ListSection(
-                  title: 'DENTRO - GOLEIROS',
-                  items: viewModel.goalkeepers,
-                ),
-              if (viewModel.players.isNotEmpty)
-                ListSection(
-                  title: 'DENTRO - JOGADORES',
-                  items: viewModel.players,
-                ),
-              if (viewModel.out.isNotEmpty)
-                ListSection(title: 'FORA', items: viewModel.out),
-              if (viewModel.doubt.isNotEmpty)
-                ListSection(title: 'DÚVIDA', items: viewModel.doubt),
-            ],
+          return RefreshIndicator(
+            onRefresh: () async => widget.presenter.reloadNextEvent(groupId: widget.groupId),
+            child: ListView(
+              children: [
+                if (viewModel.goalkeepers.isNotEmpty) ListSection(title: 'DENTRO - GOLEIROS', items: viewModel.goalkeepers),
+                if (viewModel.players.isNotEmpty) ListSection(title: 'DENTRO - JOGADORES', items: viewModel.players),
+                if (viewModel.out.isNotEmpty) ListSection(title: 'FORA', items: viewModel.out),
+                if (viewModel.doubt.isNotEmpty) ListSection(title: 'DÚVIDA', items: viewModel.doubt),
+              ]
+            )
           );
         },
       ),
