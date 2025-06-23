@@ -96,4 +96,11 @@ void main() {
     expect(nextEventLoader.groupId, groupId);
     expect(nextEventLoader.callsCount, 1);
   });
+
+  test('should emit correct events on load with success', () async {
+    sut.isBusyStream.listen(neverCalled);
+    await sut.loadNextEvent(groupId: groupId);
+    expect(nextEventLoader.groupId, groupId);
+    expect(nextEventLoader.callsCount, 1);
+  });
 }
