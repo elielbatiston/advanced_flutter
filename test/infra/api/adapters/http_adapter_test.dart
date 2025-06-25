@@ -4,8 +4,8 @@ import 'package:advanced_flutter/infra/types/json.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../../helpers/fakers.dart';
-import '../clients/client_spy.dart';
+import '../../../mocks/fakers.dart';
+import '../mocks/client_spy.dart';
 
 void main() {
   late ClientSpy client;
