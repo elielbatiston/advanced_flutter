@@ -10,6 +10,7 @@ final class LoadNextEventApiRepository {
   const LoadNextEventApiRepository({ required this.httpClient, required this.url });
 
   Future<NextEvent> loadNextEvent({ required String groupId }) async {
+    await Future.delayed(const Duration(seconds: 2));
     final json = await httpClient.get(url: url, params: { "groupId": groupId });
     if (json == null) throw UnexpectedError();
     return NextEventMapper().toObject(json);
