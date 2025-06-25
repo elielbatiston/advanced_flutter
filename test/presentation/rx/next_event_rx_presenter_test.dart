@@ -12,14 +12,19 @@
 @Timeout(Duration(seconds: 1))
 library;
 
+import 'dart:math';
+
+import 'package:advanced_flutter/domain/entities/next_event.dart';
+import 'package:advanced_flutter/domain/entities/next_event_player.dart';
 import 'package:advanced_flutter/presentation/presenters/next_event_presenter.dart';
+import 'package:dartx/dartx.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rxdart/rxdart.dart';
 
 import '../../helpers/fakers.dart';
 
 final class NextEventRxPresenter {
-  final Future<void> Function({ required String groupId }) nextEventLoader;
+  final Future<NextEvent> Function({ required String groupId }) nextEventLoader;
   final nextEventSubject = BehaviorSubject<NextEventViewModel>();
   final isBusySubject = BehaviorSubject<bool>();
 
@@ -31,25 +36,38 @@ final class NextEventRxPresenter {
   Future<void> loadNextEvent({ required String groupId, bool isReload = false }) async {
     try {
       if (isReload) isBusySubject.add(true);
-      await nextEventLoader(groupId: groupId);
-      nextEventSubject.add(const NextEventViewModel());
+      final event = await nextEventLoader(groupId: groupId);
+      nextEventSubject.add(_mapEvent(event));
     } catch (error) {
       nextEventSubject.addError(error);
     } finally {
       if (isReload) isBusySubject.add(false);
     }
   }
+
+  NextEventViewModel _mapEvent(NextEvent event) => NextEventViewModel(
+    doubt: event.players.where((player) => player.confirmationDate == null).sortedBy((player) => player.name).map(_mapPlayer).toList()
+  );
+
+  NextEventPlayerViewModel _mapPlayer(NextEventPlayer player) => NextEventPlayerViewModel(
+    name: player.name,
+    initials: player.initials
+  );
 }
 
 final class NextEventLoaderSpy {
   int callsCount = 0;
   String? groupId;
   Error? error;
+  NextEvent output = NextEvent(groupName: anyString(), date: anyDate(), players: []);
 
-  Future<void> call({ required String groupId }) async {
+  void simulatePlayers(List<NextEventPlayer> players) => output = NextEvent(groupName: anyString(), date: anyDate(), players: players);
+
+  Future<NextEvent> call({ required String groupId }) async {
     this.groupId = groupId;
     callsCount++;
     if (error != null) throw error!;
+    return output;
   }
 }
 
@@ -106,5 +124,21 @@ void main() {
     await sut.loadNextEvent(groupId: groupId);
     expect(nextEventLoader.groupId, groupId);
     expect(nextEventLoader.callsCount, 1);
+  });
+
+  test('should build doubt list sorted by name', () async {
+    nextEventLoader.simulatePlayers([
+      NextEventPlayer(id: anyString(), name: 'C', isConfirmed: anyBool()),
+      NextEventPlayer(id: anyString(), name: 'A', isConfirmed: anyBool()),
+      NextEventPlayer(id: anyString(), name: 'B', isConfirmed: anyBool(), confirmationDate: anyDate()),
+      NextEventPlayer(id: anyString(), name: 'D', isConfirmed: anyBool()),
+    ]);
+    sut.nextEventStream.listen((event) {
+      expect(event.doubt.length, 3);
+      expect(event.doubt[0].name, 'A');
+      expect(event.doubt[1].name, 'C');
+      expect(event.doubt[2].name, 'D');
+    });
+    await sut.loadNextEvent(groupId: groupId);
   });
 }
