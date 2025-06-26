@@ -1,19 +1,24 @@
+import 'package:advanced_flutter/domain/entities/next_event.dart';
+import 'package:advanced_flutter/domain/entities/next_event_player.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../mocks/fakers.dart';
 
 abstract interface class CacheGetClient {
-  Future<void> get({ required String key });
+  Future<dynamic> get({ required String key });
 }
 
 final class CacheGetClientSpy implements CacheGetClient {
   String? key;
   int callsCount = 0;
+  dynamic response;
 
   @override
-  Future<void> get({ required String key }) async {
+  Future<dynamic> get({ required String key }) async {
     this.key = key;
     callsCount++;
+    return response;
   }
 }
 
@@ -26,9 +31,37 @@ final class LoadNextEventCacheRepository {
     required this.key
   });
 
-  Future<void> loadNextEvent({ required String groupId }) async {
-    await cacheClient.get(key: '$key:$groupId');
+  Future<NextEvent> loadNextEvent({ required String groupId }) async {
+    final json = await cacheClient.get(key: '$key:$groupId');
+    return NextEventMapper().toObject(json);
   }
+}
+
+abstract base class Mapper<Entity> {
+  List<Entity> toList(dynamic arr) => arr.map<Entity>(toObject).toList();
+  Entity toObject(dynamic json);
+}
+
+
+final class NextEventMapper extends Mapper<NextEvent> {
+  @override
+  NextEvent toObject(dynamic json) => NextEvent(
+    groupName: json['groupName'],
+    date: json['date'],
+    players: NextEventPlayerMapper().toList(json['players'])
+  );
+}
+
+final class NextEventPlayerMapper extends Mapper<NextEventPlayer> {
+  @override
+  NextEventPlayer toObject(dynamic json) => NextEventPlayer(
+    id: json['id'],
+    name: json['name'],
+    position: json['position'],
+    photo: json['photo'],
+    isConfirmed: json['isConfirmed'],
+    confirmationDate: json['confirmationDate']
+  );
 }
 
 void main() {
@@ -41,6 +74,21 @@ void main() {
     groupId = anyString();
     key = anyString();
     cacheClient = CacheGetClientSpy();
+    cacheClient.response = {
+      "groupName": "any_name",
+      "date": DateTime(2024, 1, 1, 10, 30),
+      "players": [
+        {"id": "id 1", "name": "name 1", "isConfirmed": true},
+        {
+          "id": "id 2",
+          "name": "name 2",
+          "position": "position 2",
+          "photo": "photo 2",
+          "isConfirmed": false,
+          "confirmationDate": DateTime(2024, 1, 1, 12, 30),
+        },
+      ],
+    };
     sut = LoadNextEventCacheRepository(cacheClient: cacheClient, key: key);
   });
 
@@ -48,5 +96,20 @@ void main() {
     await sut.loadNextEvent(groupId: groupId);
     expect(cacheClient.key, '$key:$groupId');
     expect(cacheClient.callsCount, 1);
+  });
+
+  test('should request NextEvent on success', () async {
+    final event = await sut.loadNextEvent(groupId: groupId);
+    expect(event.groupName, 'any_name');
+    expect(event.date, DateTime(2024, 1, 1, 10, 30));
+    expect(event.players[0].id, 'id 1');
+    expect(event.players[0].name, 'name 1');
+    expect(event.players[0].isConfirmed, true);
+    expect(event.players[1].id, 'id 2');
+    expect(event.players[1].name, 'name 2');
+    expect(event.players[1].position, 'position 2');
+    expect(event.players[1].photo, 'photo 2');
+    expect(event.players[1].isConfirmed, false);
+    expect(event.players[1].confirmationDate, DateTime(2024, 1, 1, 12, 30));
   });
 }
