@@ -26,8 +26,23 @@ final class FileSpy implements File {
   int existsCallsCount = 0;
   int readAsStringCallsCount = 0;
   bool _fileExists = true;
+  String _response = '{}';
 
   void simulateFileEmpty() => _fileExists = false;
+
+  void simulateInvalidResponse() => _response = 'invalid_json';
+
+  @override
+  Future<bool> exists() async {
+    existsCallsCount++;
+    return _fileExists;
+  }
+
+  @override
+  Future<String> readAsString({Encoding encoding = utf8}) async {
+    readAsStringCallsCount++;
+    return _response;
+  }
 
   @override
   File get absolute => throw UnimplementedError();
@@ -55,12 +70,6 @@ final class FileSpy implements File {
 
   @override
   String get dirname => throw UnimplementedError();
-
-  @override
-  Future<bool> exists() async {
-    existsCallsCount++;
-    return _fileExists;
-  }
 
   @override
   bool existsSync() => throw UnimplementedError();
@@ -118,12 +127,6 @@ final class FileSpy implements File {
 
   @override
   List<String> readAsLinesSync({Encoding encoding = utf8}) => throw UnimplementedError();
-
-  @override
-  Future<String> readAsString({Encoding encoding = utf8}) async {
-    readAsStringCallsCount++;
-    return '';
-  }
 
   @override
   String readAsStringSync({Encoding encoding = utf8}) => throw UnimplementedError();
@@ -193,6 +196,13 @@ final class CacheManagerSpy implements BaseCacheManager {
   void simulateCacheOld() => _validTill = DateTime.now().subtract(const Duration(seconds: 2));
 
   @override
+  Future<FileInfo?> getFileFromCache(String key, {bool ignoreMemCache = false}) async {
+    getFileFromCacheCallsCount++;
+    this.key = key;
+    return _isFileInfoEmpty ? null : FileInfo(file, FileSource.Cache, _validTill, '');
+  }
+
+  @override
   Future<void> dispose() => throw UnimplementedError();
 
   @override
@@ -203,13 +213,6 @@ final class CacheManagerSpy implements BaseCacheManager {
 
   @override
   Stream<FileInfo> getFile(String url, {String? key, Map<String, String>? headers}) => throw UnimplementedError();
-
-  @override
-  Future<FileInfo?> getFileFromCache(String key, {bool ignoreMemCache = false}) async {
-    getFileFromCacheCallsCount++;
-    this.key = key;
-    return _isFileInfoEmpty ? null : FileInfo(file, FileSource.Cache, _validTill, '');
-  }
 
   @override
   Future<FileInfo?> getFileFromMemory(String key) => throw UnimplementedError();
@@ -275,5 +278,11 @@ void main() {
     await sut.get(key: key);
     expect(client.key, key);
     expect(client.file.readAsStringCallsCount, 1);
+  });
+
+  test('should return null if cache is invalid', () async {
+    client.file.simulateInvalidResponse();
+    final json = await sut.get(key: key);
+    expect(json, isNull);
   });
 }
