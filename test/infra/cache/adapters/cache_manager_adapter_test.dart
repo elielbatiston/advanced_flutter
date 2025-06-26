@@ -17,12 +17,14 @@ class CacheManagerAdapter {
   Future<dynamic> get({ required String key }) async {
     final info = await client.getFileFromCache(key);
     await info?.file.exists();
+    await info?.file.readAsString();
     return null;
   }
 }
 
 final class FileSpy implements File {
   int existsCallsCount = 0;
+  int readAsStringCallsCount = 0;
   bool _fileExists = true;
 
   void simulateFileEmpty() => _fileExists = false;
@@ -118,7 +120,10 @@ final class FileSpy implements File {
   List<String> readAsLinesSync({Encoding encoding = utf8}) => throw UnimplementedError();
 
   @override
-  Future<String> readAsString({Encoding encoding = utf8}) => throw UnimplementedError();
+  Future<String> readAsString({Encoding encoding = utf8}) async {
+    readAsStringCallsCount++;
+    return '';
+  }
 
   @override
   String readAsStringSync({Encoding encoding = utf8}) => throw UnimplementedError();
@@ -264,5 +269,11 @@ void main() {
     client.file.simulateFileEmpty();
     final json = await sut.get(key: key);
     expect(json, isNull);
+  });
+
+  test('should call file.readAsString only once', () async {
+    await sut.get(key: key);
+    expect(client.key, key);
+    expect(client.file.readAsStringCallsCount, 1);
   });
 }
