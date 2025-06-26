@@ -6,13 +6,13 @@ import 'package:network_image_mock/network_image_mock.dart';
 
 void main() {
   testWidgets('should present initials when there is no photo', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: PlayerPhoto(initials: 'EL', photo: null)));
+    await tester.pumpWidget(const MaterialApp(home: PlayerPhoto(initials: 'RO', photo: null)));
     expect(find.text('RO'), findsOneWidget);
   });
 
   testWidgets('should hide initials when there is photo', (tester) async {
     mockNetworkImagesFor(() async {
-      await tester.pumpWidget(const MaterialApp(home: PlayerPhoto(initials: 'EL', photo: 'http://any-url.com')));
+      await tester.pumpWidget(const MaterialApp(home: PlayerPhoto(initials: 'RO', photo: 'http://any-url.com')));
       expect(find.text('RO'), findsNothing);
     });
   });
