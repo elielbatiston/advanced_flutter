@@ -14,9 +14,9 @@ class CacheManagerAdapter {
   const CacheManagerAdapter({required this.client});
 
   Future<dynamic> get({required String key}) async {
+    final info = await client.getFileFromCache(key);
+    if (info?.validTill.isBefore(DateTime.now()) != false || !await info!.file.exists()) return null;
     try {
-      final info = await client.getFileFromCache(key);
-      if (info?.validTill.isBefore(DateTime.now()) != false || !await info!.file.exists()) return null;
       final data = await info.file.readAsString();
       return jsonDecode(data);
     } catch (err) {
@@ -30,8 +30,11 @@ final class FileSpy implements File {
   int readAsStringCallsCount = 0;
   bool _fileExists = true;
   String _response = '{}';
+  Error? _readAsStringError;
 
   void simulateFileEmpty() => _fileExists = false;
+
+  void simulateReadAsStringError() => _readAsStringError = Error();
 
   void simulateInvalidResponse() => _response = 'invalid_json';
 
@@ -46,6 +49,7 @@ final class FileSpy implements File {
   @override
   Future<String> readAsString({Encoding encoding = utf8}) async {
     readAsStringCallsCount++;
+    if (_readAsStringError != null) throw _readAsStringError!;
     return _response;
   }
 
@@ -62,16 +66,13 @@ final class FileSpy implements File {
   File copySync(String newPath) => throw UnimplementedError();
 
   @override
-  Future<File> create({bool recursive = false, bool exclusive = false}) =>
-      throw UnimplementedError();
+  Future<File> create({bool recursive = false, bool exclusive = false}) => throw UnimplementedError();
 
   @override
-  void createSync({bool recursive = false, bool exclusive = false}) =>
-      throw UnimplementedError();
+  void createSync({bool recursive = false, bool exclusive = false}) => throw UnimplementedError();
 
   @override
-  Future<FileSystemEntity> delete({bool recursive = false}) =>
-      throw UnimplementedError();
+  Future<FileSystemEntity> delete({bool recursive = false}) => throw UnimplementedError();
 
   @override
   void deleteSync({bool recursive = false}) => throw UnimplementedError();
@@ -107,21 +108,16 @@ final class FileSpy implements File {
   int lengthSync() => throw UnimplementedError();
 
   @override
-  Future<RandomAccessFile> open({FileMode mode = FileMode.read}) =>
-      throw UnimplementedError();
+  Future<RandomAccessFile> open({FileMode mode = FileMode.read}) => throw UnimplementedError();
 
   @override
-  Stream<List<int>> openRead([int? start, int? end]) =>
-      throw UnimplementedError();
+  Stream<List<int>> openRead([int? start, int? end]) => throw UnimplementedError();
 
   @override
-  RandomAccessFile openSync({FileMode mode = FileMode.read}) =>
-      throw UnimplementedError();
+  RandomAccessFile openSync({FileMode mode = FileMode.read}) => throw UnimplementedError();
 
   @override
-  IOSink openWrite(
-          {FileMode mode = FileMode.write, Encoding encoding = utf8}) =>
-      throw UnimplementedError();
+  IOSink openWrite({FileMode mode = FileMode.write, Encoding encoding = utf8}) => throw UnimplementedError();
 
   @override
   Directory get parent => throw UnimplementedError();
@@ -136,16 +132,13 @@ final class FileSpy implements File {
   Uint8List readAsBytesSync() => throw UnimplementedError();
 
   @override
-  Future<List<String>> readAsLines({Encoding encoding = utf8}) =>
-      throw UnimplementedError();
+  Future<List<String>> readAsLines({Encoding encoding = utf8}) => throw UnimplementedError();
 
   @override
-  List<String> readAsLinesSync({Encoding encoding = utf8}) =>
-      throw UnimplementedError();
+  List<String> readAsLinesSync({Encoding encoding = utf8}) => throw UnimplementedError();
 
   @override
-  String readAsStringSync({Encoding encoding = utf8}) =>
-      throw UnimplementedError();
+  String readAsStringSync({Encoding encoding = utf8}) => throw UnimplementedError();
 
   @override
   Future<File> rename(String newPath) => throw UnimplementedError();
@@ -181,31 +174,19 @@ final class FileSpy implements File {
   Uri get uri => throw UnimplementedError();
 
   @override
-  Stream<FileSystemEvent> watch(
-          {int events = FileSystemEvent.all, bool recursive = false}) =>
-      throw UnimplementedError();
+  Stream<FileSystemEvent> watch({int events = FileSystemEvent.all, bool recursive = false}) => throw UnimplementedError();
 
   @override
-  Future<File> writeAsBytes(List<int> bytes,
-          {FileMode mode = FileMode.write, bool flush = false}) =>
-      throw UnimplementedError();
+  Future<File> writeAsBytes(List<int> bytes, {FileMode mode = FileMode.write, bool flush = false}) => throw UnimplementedError();
 
   @override
-  void writeAsBytesSync(List<int> bytes,
-      {FileMode mode = FileMode.write, bool flush = false}) {}
+  void writeAsBytesSync(List<int> bytes, {FileMode mode = FileMode.write, bool flush = false}) {}
 
   @override
-  Future<File> writeAsString(String contents,
-          {FileMode mode = FileMode.write,
-          Encoding encoding = utf8,
-          bool flush = false}) =>
-      throw UnimplementedError();
+  Future<File> writeAsString(String contents, {FileMode mode = FileMode.write, Encoding encoding = utf8, bool flush = false}) => throw UnimplementedError();
 
   @override
-  void writeAsStringSync(String contents,
-      {FileMode mode = FileMode.write,
-      Encoding encoding = utf8,
-      bool flush = false}) {}
+  void writeAsStringSync(String contents, {FileMode mode = FileMode.write, Encoding encoding = utf8, bool flush = false}) {}
 }
 
 final class CacheManagerSpy implements BaseCacheManager {
@@ -217,65 +198,41 @@ final class CacheManagerSpy implements BaseCacheManager {
 
   void simulateEmptyFileInfo() => _isFileInfoEmpty = true;
 
-  void simulateCacheOld() =>
-      _validTill = DateTime.now().subtract(const Duration(seconds: 2));
+  void simulateCacheOld() => _validTill = DateTime.now().subtract(const Duration(seconds: 2));
 
   @override
-  Future<FileInfo?> getFileFromCache(String key,
-      {bool ignoreMemCache = false}) async {
+  Future<FileInfo?> getFileFromCache(String key, {bool ignoreMemCache = false}) async {
     getFileFromCacheCallsCount++;
     this.key = key;
-    return _isFileInfoEmpty
-        ? null
-        : FileInfo(file, FileSource.Cache, _validTill, '');
+    return _isFileInfoEmpty ? null : FileInfo(file, FileSource.Cache, _validTill, '');
   }
 
   @override
   Future<void> dispose() => throw UnimplementedError();
 
   @override
-  Future<FileInfo> downloadFile(String url,
-          {String? key,
-          Map<String, String>? authHeaders,
-          bool force = false}) =>
-      throw UnimplementedError();
+  Future<FileInfo> downloadFile(String url, {String? key, Map<String, String>? authHeaders, bool force = false}) => throw UnimplementedError();
 
   @override
   Future<void> emptyCache() => throw UnimplementedError();
 
   @override
-  Stream<FileInfo> getFile(String url,
-          {String? key, Map<String, String>? headers}) =>
-      throw UnimplementedError();
+  Stream<FileInfo> getFile(String url, {String? key, Map<String, String>? headers}) => throw UnimplementedError();
 
   @override
   Future<FileInfo?> getFileFromMemory(String key) => throw UnimplementedError();
 
   @override
-  Stream<FileResponse> getFileStream(String url,
-          {String? key, Map<String, String>? headers, bool? withProgress}) =>
-      throw UnimplementedError();
+  Stream<FileResponse> getFileStream(String url, {String? key, Map<String, String>? headers, bool? withProgress}) => throw UnimplementedError();
 
   @override
-  Future<File> getSingleFile(String url,
-          {String? key, Map<String, String>? headers}) =>
-      throw UnimplementedError();
+  Future<File> getSingleFile(String url, {String? key, Map<String, String>? headers}) => throw UnimplementedError();
 
   @override
-  Future<File> putFile(String url, Uint8List fileBytes,
-          {String? key,
-          String? eTag,
-          Duration maxAge = const Duration(days: 30),
-          String fileExtension = 'file'}) =>
-      throw UnimplementedError();
+  Future<File> putFile(String url, Uint8List fileBytes, {String? key, String? eTag, Duration maxAge = const Duration(days: 30), String fileExtension = 'file'}) => throw UnimplementedError();
 
   @override
-  Future<File> putFileStream(String url, Stream<List<int>> source,
-          {String? key,
-          String? eTag,
-          Duration maxAge = const Duration(days: 30),
-          String fileExtension = 'file'}) =>
-      throw UnimplementedError();
+  Future<File> putFileStream(String url, Stream<List<int>> source, {String? key, String? eTag, Duration maxAge = const Duration(days: 30), String fileExtension = 'file'}) => throw UnimplementedError();
 
   @override
   Future<void> removeFile(String key) => throw UnimplementedError();
@@ -330,6 +287,12 @@ void main() {
 
   test('should return null if cache is invalid', () async {
     client.file.simulateInvalidResponse();
+    final json = await sut.get(key: key);
+    expect(json, isNull);
+  });
+
+  test('should return null if file.readAsString fails', () async {
+    client.file.simulateReadAsStringError();
     final json = await sut.get(key: key);
     expect(json, isNull);
   });
