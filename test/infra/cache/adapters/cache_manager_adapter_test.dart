@@ -15,8 +15,8 @@ class CacheManagerAdapter {
 
   Future<dynamic> get({required String key}) async {
     final info = await client.getFileFromCache(key);
-    if (info?.validTill.isBefore(DateTime.now()) != false || !await info!.file.exists()) return null;
     try {
+      if (info?.validTill.isBefore(DateTime.now()) != false || !await info!.file.exists()) return null;
       final data = await info.file.readAsString();
       return jsonDecode(data);
     } catch (err) {
@@ -31,10 +31,13 @@ final class FileSpy implements File {
   bool _fileExists = true;
   String _response = '{}';
   Error? _readAsStringError;
+  Error? _existsError;
 
   void simulateFileEmpty() => _fileExists = false;
 
   void simulateReadAsStringError() => _readAsStringError = Error();
+
+  void simulateExistsError() => _existsError = Error();
 
   void simulateInvalidResponse() => _response = 'invalid_json';
 
@@ -43,6 +46,7 @@ final class FileSpy implements File {
   @override
   Future<bool> exists() async {
     existsCallsCount++;
+    if (_existsError != null) throw _existsError!;
     return _fileExists;
   }
 
@@ -201,10 +205,12 @@ final class CacheManagerSpy implements BaseCacheManager {
   void simulateCacheOld() => _validTill = DateTime.now().subtract(const Duration(seconds: 2));
 
   @override
-  Future<FileInfo?> getFileFromCache(String key, {bool ignoreMemCache = false}) async {
+  Future<FileInfo?> getFileFromCache(String key, { bool ignoreMemCache = false }) async {
     getFileFromCacheCallsCount++;
     this.key = key;
-    return _isFileInfoEmpty ? null : FileInfo(file, FileSource.Cache, _validTill, '');
+    return _isFileInfoEmpty
+        ? null
+        : FileInfo(file, FileSource.Cache, _validTill, '');
   }
 
   @override
@@ -293,6 +299,12 @@ void main() {
 
   test('should return null if file.readAsString fails', () async {
     client.file.simulateReadAsStringError();
+    final json = await sut.get(key: key);
+    expect(json, isNull);
+  });
+
+  test('should return null if file.exists fails', () async {
+    client.file.simulateExistsError();
     final json = await sut.get(key: key);
     expect(json, isNull);
   });
