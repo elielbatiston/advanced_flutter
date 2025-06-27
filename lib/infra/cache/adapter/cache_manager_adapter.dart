@@ -1,11 +1,11 @@
 import 'dart:convert';
 
-import 'package:advanced_flutter/domain/entities/errors.dart';
 import 'package:advanced_flutter/infra/cache/clients/cache_get_client.dart';
+import 'package:advanced_flutter/infra/cache/clients/cache_save_client.dart';
 
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-class CacheManagerAdapter implements CacheGetClient {
+class CacheManagerAdapter implements CacheGetClient, CacheSaveClient {
   final BaseCacheManager client;
 
   const CacheManagerAdapter({required this.client});
@@ -23,11 +23,7 @@ class CacheManagerAdapter implements CacheGetClient {
   }
 
   @override
-  Future<dynamic> save({ required String key, required dynamic value }) async {
-    try {
-      client.putFile(key, utf8.encode(jsonEncode(value)), fileExtension: 'json');
-    } catch (err) {
-      throw UnexpectedError();
-    }
+  Future<void> save({ required String key, required dynamic value }) async {
+    client.putFile(key, utf8.encode(jsonEncode(value)), fileExtension: 'json');
   }
 }
