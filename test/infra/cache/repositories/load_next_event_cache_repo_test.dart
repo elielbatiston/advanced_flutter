@@ -18,16 +18,20 @@ void main() {
     cacheClient = CacheGetClientSpy();
     cacheClient.response = {
       "groupName": "any_name",
-      "date": DateTime(2024, 1, 1, 10, 30),
+      "date": "2024-01-01T10:30:00.000",
       "players": [
-        {"id": "id 1", "name": "name 1", "isConfirmed": true},
+        {
+          "id": "id 1",
+          "name": "name 1",
+          "isConfirmed": true
+        },
         {
           "id": "id 2",
           "name": "name 2",
           "position": "position 2",
           "photo": "photo 2",
           "isConfirmed": false,
-          "confirmationDate": DateTime(2024, 1, 1, 12, 30),
+          "confirmationDate": "2024-01-01T12:30:00.000"
         },
       ],
     };

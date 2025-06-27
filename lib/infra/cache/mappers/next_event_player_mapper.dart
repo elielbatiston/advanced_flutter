@@ -10,7 +10,7 @@ final class NextEventPlayerMapper extends Mapper<NextEventPlayer> {
     position: json['position'],
     photo: json['photo'],
     isConfirmed: json['isConfirmed'],
-    confirmationDate: json['confirmationDate']
+    confirmationDate: DateTime.tryParse(json['confirmationDate'] ?? '')
   );
 
   JsonArr toJsonArr(List<NextEventPlayer> players) => players.map(toJson).toList();
@@ -21,6 +21,6 @@ final class NextEventPlayerMapper extends Mapper<NextEventPlayer> {
     'position': player.position,
     'photo': player.photo,
     'isConfirmed': player.isConfirmed,
-    'confirmationDate': player.confirmationDate
+    'confirmationDate': player.confirmationDate?.toIso8601String()
   };
 }
