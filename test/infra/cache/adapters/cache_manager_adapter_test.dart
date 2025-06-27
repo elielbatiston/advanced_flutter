@@ -1,3 +1,4 @@
+import 'package:advanced_flutter/domain/entities/errors.dart';
 import 'package:advanced_flutter/infra/cache/adapter/cache_manager_adapter.dart';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -72,7 +73,7 @@ void main() {
     });
 
     test('should return null if getFileFromCache fails', () async {
-      client.simulateGetFileFromCache();
+      client.simulateGetFileFromCacheError();
       final json = await sut.get(key: key);
       expect(json, isNull);
     });
@@ -108,6 +109,12 @@ void main() {
       expect(client.fileExtension, 'json');
       expect(client.fileBytesDecoded, value);
       expect(client.putFileCallsCount, 1);
+    });
+
+    test('should throw UnexpectedError ', () async {
+      client.simulatePutFileError();
+      final future = sut.save(key: key, value: value);
+      expect(future, throwsA(isA<UnexpectedError>()));
     });
   });
 }
