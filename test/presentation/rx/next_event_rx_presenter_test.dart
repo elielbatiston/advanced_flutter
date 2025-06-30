@@ -9,8 +9,7 @@
 
   ou você mantem o teste sem o timeout e coloca a diretiva que servirá para todos os testes
 */
-@Timeout(Duration(seconds: 1))
-library;
+@Timeout(Duration(seconds: 1)) library;
 
 import 'package:advanced_flutter/domain/entities/next_event_player.dart';
 import 'package:advanced_flutter/presentation/presenters/next_event_presenter.dart';

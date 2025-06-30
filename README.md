@@ -14,3 +14,11 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+# comandos utilizados
+fvm install 3.27.3
+fvm use 3.27.3
+
+fvm flutter pub cache repair => limpa o cache do pub
+fvm flutter pub get => baixa as dependencias de novo
+fvm flutter pub outdated => mostra dependencias desatualizadas
