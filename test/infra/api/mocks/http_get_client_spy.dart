@@ -1,13 +1,15 @@
 import 'package:advanced_flutter/infra/api/clients/http_get_client.dart';
 import 'package:advanced_flutter/infra/types/json.dart';
 
+import '../../../mocks/fakers.dart';
+
 final class HttpGetClientSpy implements HttpGetClient {
   String? url;
   int callsCount = 0;
   Json? headers;
   Json? params;
   Json? queryString;
-  dynamic response;
+  dynamic response = anyJson();
   Error? error;
 
   @override
