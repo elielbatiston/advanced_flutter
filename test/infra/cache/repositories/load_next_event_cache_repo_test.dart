@@ -1,41 +1,26 @@
 import 'package:advanced_flutter/domain/entities/errors.dart';
+import 'package:advanced_flutter/domain/entities/next_event.dart';
 import 'package:advanced_flutter/infra/cache/repositories/load_next_event_cache_repo.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../mocks/fakers.dart';
+import '../../mocks/mapper_spy.dart';
 import '../mocks/cache_get_client_spy.dart';
 
 void main() {
   late String groupId;
   late String key;
   late CacheGetClientSpy cacheClient;
+  late MapperSpy<NextEvent> mapper;
   late LoadNextEventCacheRepository sut;
 
   setUp(() {
     groupId = anyString();
     key = anyString();
     cacheClient = CacheGetClientSpy();
-    cacheClient.response = {
-      "groupName": "any_name",
-      "date": "2024-01-01T10:30:00.000",
-      "players": [
-        {
-          "id": "id 1",
-          "name": "name 1",
-          "isConfirmed": true
-        },
-        {
-          "id": "id 2",
-          "name": "name 2",
-          "position": "position 2",
-          "photo": "photo 2",
-          "isConfirmed": false,
-          "confirmationDate": "2024-01-01T12:30:00.000"
-        },
-      ],
-    };
-    sut = LoadNextEventCacheRepository(cacheClient: cacheClient, key: key);
+    mapper = MapperSpy(toDtoOutput: anyNextEvent());
+    sut = LoadNextEventCacheRepository(cacheClient: cacheClient, key: key, mapper: mapper);
   });
 
   test('should call CacheClient with correct input', () async {
@@ -46,17 +31,9 @@ void main() {
 
   test('should request NextEvent on success', () async {
     final event = await sut.loadNextEvent(groupId: groupId);
-    expect(event.groupName, 'any_name');
-    expect(event.date, DateTime(2024, 1, 1, 10, 30));
-    expect(event.players[0].id, 'id 1');
-    expect(event.players[0].name, 'name 1');
-    expect(event.players[0].isConfirmed, true);
-    expect(event.players[1].id, 'id 2');
-    expect(event.players[1].name, 'name 2');
-    expect(event.players[1].position, 'position 2');
-    expect(event.players[1].photo, 'photo 2');
-    expect(event.players[1].isConfirmed, false);
-    expect(event.players[1].confirmationDate, DateTime(2024, 1, 1, 12, 30));
+    expect(event, mapper.toDtoOutput);
+    expect(mapper.toDtoInput, cacheClient.response);
+    expect(mapper.toDtoInputCallsCount, 1);
   });
 
   test('should rethrow on error', () async {
