@@ -6,10 +6,12 @@ import '../../mocks/fakers.dart';
 final class EditUserViewModel {
   bool isNaturalPerson;
   bool showCpf;
+  bool showCnpj;
 
   EditUserViewModel({
     required this.isNaturalPerson,
-    required this.showCpf
+    required this.showCpf,
+    required this.showCnpj
   });
 }
 
@@ -62,6 +64,12 @@ final class EditUserPage extends StatelessWidget {
                 decoration: InputDecoration(
                   labelText: 'CPF'
                 )
+              ),
+              if (snapshot.data?.showCnpj == true) TextFormField(
+                keyboardType: TextInputType.numberWithOptions(),
+                decoration: InputDecoration(
+                  labelText: 'CNPJ'
+                )
               )
             ]
           )
@@ -73,12 +81,13 @@ final class EditUserPage extends StatelessWidget {
 
 final class LoadUserDataSpy {
   var callsCount = 0;
-  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool());
+  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool());
 
-  void modkResponse({ bool? isNaturalPerson, bool? showCpf }) {
+  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj }) {
     _response = EditUserViewModel(
       isNaturalPerson: isNaturalPerson ?? anyBool(),
-      showCpf: showCpf ?? anyBool()
+      showCpf: showCpf ?? anyBool(),
+      showCnpj: showCnpj ?? anyBool(),
     );
   }
 
@@ -141,18 +150,32 @@ void main() {
     expect(tester.legalPersonRadio.checked, true);
   });
 
-  testWidgets('should show cpf', (tester) async {
+  testWidgets('should show CPF', (tester) async {
     loadUserData.modkResponse(showCpf: true);
     await tester.pumpWidget(sut);
     await tester.pump();
     expect(tester.cpfFinder, findsOneWidget);
   });
 
-  testWidgets('should hide cpf', (tester) async {
+  testWidgets('should hide CPF', (tester) async {
     loadUserData.modkResponse(showCpf: false);
     await tester.pumpWidget(sut);
     await tester.pump();
     expect(tester.cpfFinder, findsNothing);
+  });
+
+  testWidgets('should show CNPJ', (tester) async {
+    loadUserData.modkResponse(showCnpj: true);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cnpjFinder, findsOneWidget);
+  });
+
+  testWidgets('should hide CNPJ', (tester) async {
+    loadUserData.modkResponse(showCnpj: false);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cnpjFinder, findsNothing);
   });
 }
 
@@ -160,6 +183,7 @@ extension EditUserPageExtension on WidgetTester {
   Finder get naturalPersonFinder => find.ancestor(of: find.text('Pessoa física'), matching: find.byType(RadioListTile<bool>));
   Finder get legalPersonFinder => find.ancestor(of: find.text('Pessoa jurídica'), matching: find.byType(RadioListTile<bool>));
   Finder get cpfFinder => find.text('CPF');
+  Finder get cnpjFinder => find.text('CNPJ');
   RadioListTile get naturalPersonRadio => widget(naturalPersonFinder);
   RadioListTile get legalPersonRadio => widget(legalPersonFinder);
 }
