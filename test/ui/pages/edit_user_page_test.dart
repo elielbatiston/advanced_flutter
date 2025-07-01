@@ -7,11 +7,13 @@ final class EditUserViewModel {
   bool isNaturalPerson;
   bool showCpf;
   bool showCnpj;
+  String? cpf;
 
   EditUserViewModel({
     required this.isNaturalPerson,
     required this.showCpf,
-    required this.showCnpj
+    required this.showCnpj,
+    this.cpf
   });
 }
 
@@ -61,6 +63,7 @@ final class EditUserPage extends StatelessWidget {
               ),
               if (snapshot.data?.showCpf == true) TextFormField(
                 keyboardType: TextInputType.numberWithOptions(),
+                initialValue: snapshot.data?.cpf,
                 decoration: InputDecoration(
                   labelText: 'CPF'
                 )
@@ -81,13 +84,14 @@ final class EditUserPage extends StatelessWidget {
 
 final class LoadUserDataSpy {
   var callsCount = 0;
-  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool());
+  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool(), cpf: anyString());
 
-  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj }) {
+  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj, String? cpf }) {
     _response = EditUserViewModel(
       isNaturalPerson: isNaturalPerson ?? anyBool(),
       showCpf: showCpf ?? anyBool(),
       showCnpj: showCnpj ?? anyBool(),
+      cpf: cpf
     );
   }
 
@@ -98,10 +102,12 @@ final class LoadUserDataSpy {
 }
 
 void main() {
+  late String cpf;
   late LoadUserDataSpy loadUserData;
   late Widget sut;
 
   setUp(() {
+    cpf = anyString();
     loadUserData = LoadUserDataSpy();
     sut = MaterialApp(home: EditUserPage(loadUserData: loadUserData.call));
   });
@@ -177,13 +183,28 @@ void main() {
     await tester.pump();
     expect(tester.cnpjFinder, findsNothing);
   });
+
+  testWidgets('should fill CPF', (tester) async {
+    loadUserData.modkResponse(cpf: cpf, showCpf: true);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cpfTextField.initialValue, cpf);
+  });
+
+  testWidgets('should clear CPF', (tester) async {
+    loadUserData.modkResponse(cpf: null, showCpf: true);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cpfTextField.initialValue, isEmpty);
+  });
 }
 
 extension EditUserPageExtension on WidgetTester {
   Finder get naturalPersonFinder => find.ancestor(of: find.text('Pessoa física'), matching: find.byType(RadioListTile<bool>));
   Finder get legalPersonFinder => find.ancestor(of: find.text('Pessoa jurídica'), matching: find.byType(RadioListTile<bool>));
-  Finder get cpfFinder => find.text('CPF');
+  Finder get cpfFinder => find.ancestor(of: find.text('CPF'), matching: find.byType(TextFormField));
   Finder get cnpjFinder => find.text('CNPJ');
   RadioListTile get naturalPersonRadio => widget(naturalPersonFinder);
   RadioListTile get legalPersonRadio => widget(legalPersonFinder);
+  TextFormField get cpfTextField => widget(cpfFinder);
 }
