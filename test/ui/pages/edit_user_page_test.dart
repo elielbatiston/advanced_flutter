@@ -77,17 +77,21 @@ final class LoadUserDataSpy {
 }
 
 void main() {
+  late LoadUserDataSpy loadUserData;
+  late Widget sut;
+
+  setUp(() {
+    loadUserData = LoadUserDataSpy();
+    sut = MaterialApp(home: EditUserPage(loadUserData: loadUserData.call));
+  });
+
   testWidgets('should load user data on page init', (tester) async {
-    final loadUserData = LoadUserDataSpy();
-    final sut = MaterialApp(home: EditUserPage(loadUserData: loadUserData.call));
     await tester.pumpWidget(sut);
     expect(loadUserData.isCalled, true);
   });
 
   testWidgets('should check natural person', (tester) async {
-    final loadUserData = LoadUserDataSpy();
     loadUserData.response = EditUserViewModel(isNaturalPerson: true);
-    final sut = MaterialApp(home: EditUserPage(loadUserData: loadUserData.call));
     await tester.pumpWidget(sut);
     await tester.pump();
     // expect(find.byKey(Key('pf')), findsOneWidget); isso aqui é um codigo de teste em producao. Ele nao recomenda
@@ -113,9 +117,7 @@ void main() {
   });
 
   testWidgets('should check legal person', (tester) async {
-    final loadUserData = LoadUserDataSpy();
     loadUserData.response = EditUserViewModel(isNaturalPerson: false);
-    final sut = MaterialApp(home: EditUserPage(loadUserData: loadUserData.call));
     await tester.pumpWidget(sut);
     await tester.pump();
     expect(
