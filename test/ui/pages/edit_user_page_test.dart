@@ -22,8 +22,6 @@ final class EditUserPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    loadUserData();
-
     /* Exemplo com Radio
     return Scaffold(
       body: Row(
@@ -67,11 +65,11 @@ final class EditUserPage extends StatelessWidget {
 }
 
 final class LoadUserDataSpy {
-  var isCalled = false;
+  var callsCount = 0;
   var response = EditUserViewModel(isNaturalPerson: anyBool());
 
   Future<EditUserViewModel> call() async {
-    isCalled = true;
+    callsCount++;
     return response;
   }
 }
@@ -87,7 +85,7 @@ void main() {
 
   testWidgets('should load user data on page init', (tester) async {
     await tester.pumpWidget(sut);
-    expect(loadUserData.isCalled, true);
+    expect(loadUserData.callsCount, 1);
   });
 
   testWidgets('should check natural person', (tester) async {
