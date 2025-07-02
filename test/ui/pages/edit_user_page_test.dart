@@ -8,12 +8,14 @@ final class EditUserViewModel {
   bool showCpf;
   bool showCnpj;
   String? cpf;
+  String? cnpj;
 
   EditUserViewModel({
     required this.isNaturalPerson,
     required this.showCpf,
     required this.showCnpj,
-    this.cpf
+    this.cpf,
+    this.cnpj
   });
 }
 
@@ -46,6 +48,7 @@ final class EditUserPage extends StatelessWidget {
     return FutureBuilder<EditUserViewModel>(
       future: loadUserData(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
         return Scaffold(
           body: Column(
             children: [
@@ -70,6 +73,7 @@ final class EditUserPage extends StatelessWidget {
               ),
               if (snapshot.data?.showCnpj == true) TextFormField(
                 keyboardType: TextInputType.numberWithOptions(),
+                initialValue: snapshot.data?.cnpj,
                 decoration: InputDecoration(
                   labelText: 'CNPJ'
                 )
@@ -84,14 +88,15 @@ final class EditUserPage extends StatelessWidget {
 
 final class LoadUserDataSpy {
   var callsCount = 0;
-  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool(), cpf: anyString());
+  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool());
 
-  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj, String? cpf }) {
+  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj, String? cpf, String? cnpj }) {
     _response = EditUserViewModel(
       isNaturalPerson: isNaturalPerson ?? anyBool(),
       showCpf: showCpf ?? anyBool(),
       showCnpj: showCnpj ?? anyBool(),
-      cpf: cpf
+      cpf: cpf,
+      cnpj: cnpj
     );
   }
 
@@ -103,11 +108,13 @@ final class LoadUserDataSpy {
 
 void main() {
   late String cpf;
+  late String cnpj;
   late LoadUserDataSpy loadUserData;
   late Widget sut;
 
   setUp(() {
     cpf = anyString();
+    cnpj = anyString();
     loadUserData = LoadUserDataSpy();
     sut = MaterialApp(home: EditUserPage(loadUserData: loadUserData.call));
   });
@@ -115,6 +122,13 @@ void main() {
   testWidgets('should load user data on page init', (tester) async {
     await tester.pumpWidget(sut);
     expect(loadUserData.callsCount, 1);
+  });
+
+  testWidgets('should handle spinner on load', (tester) async {
+    await tester.pumpWidget(sut);
+    expect(tester.spinnerFinder, findsOneWidget);
+    await tester.pump();
+    expect(tester.spinnerFinder, findsNothing);
   });
 
   testWidgets('should check natural person', (tester) async {
@@ -197,14 +211,30 @@ void main() {
     await tester.pump();
     expect(tester.cpfTextField.initialValue, isEmpty);
   });
+
+  testWidgets('should fill CNPJ', (tester) async {
+    loadUserData.modkResponse(cnpj: cnpj, showCnpj: true);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cnpjTextField.initialValue, cnpj);
+  });
+
+  testWidgets('should clear CNPJ', (tester) async {
+    loadUserData.modkResponse(cnpj: null, showCnpj: true);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cnpjTextField.initialValue, isEmpty);
+  });
 }
 
 extension EditUserPageExtension on WidgetTester {
   Finder get naturalPersonFinder => find.ancestor(of: find.text('Pessoa física'), matching: find.byType(RadioListTile<bool>));
   Finder get legalPersonFinder => find.ancestor(of: find.text('Pessoa jurídica'), matching: find.byType(RadioListTile<bool>));
   Finder get cpfFinder => find.ancestor(of: find.text('CPF'), matching: find.byType(TextFormField));
-  Finder get cnpjFinder => find.text('CNPJ');
+  Finder get cnpjFinder => find.ancestor(of: find.text('CNPJ'), matching: find.byType(TextFormField));
+  Finder get spinnerFinder => find.byType(CircularProgressIndicator);
   RadioListTile get naturalPersonRadio => widget(naturalPersonFinder);
   RadioListTile get legalPersonRadio => widget(legalPersonFinder);
   TextFormField get cpfTextField => widget(cpfFinder);
+  TextFormField get cnpjTextField => widget(cnpjFinder);
 }
