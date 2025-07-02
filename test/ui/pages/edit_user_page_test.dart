@@ -8,6 +8,7 @@ final class EditUserViewModel {
   bool showCpf;
   bool showCnpj;
   bool isCpfValid;
+  bool isCnpjValid;
   String? cpf;
   String? cnpj;
 
@@ -16,6 +17,7 @@ final class EditUserViewModel {
     required this.showCpf,
     required this.showCnpj,
     required this.isCpfValid,
+    required this.isCnpjValid,
     this.cpf,
     this.cnpj
   });
@@ -80,7 +82,8 @@ final class EditUserPage extends StatelessWidget {
                 keyboardType: TextInputType.numberWithOptions(),
                 initialValue: viewModel.cnpj,
                 decoration: InputDecoration(
-                  labelText: 'CNPJ'
+                  labelText: 'CNPJ',
+                  errorText: viewModel.isCnpjValid ? null : 'Valor inválido'
                 )
               )
             ]
@@ -94,14 +97,15 @@ final class EditUserPage extends StatelessWidget {
 final class LoadUserDataSpy {
   var callsCount = 0;
   Error? _error;
-  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool(), isCpfValid: anyBool());
+  var _response = EditUserViewModel(isNaturalPerson: anyBool(), showCpf: anyBool(), showCnpj: anyBool(), isCpfValid: anyBool(), isCnpjValid: anyBool());
 
-  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj, String? cpf, String? cnpj, bool? isCpfValid }) {
+  void modkResponse({ bool? isNaturalPerson, bool? showCpf, bool? showCnpj, String? cpf, String? cnpj, bool? isCpfValid, bool? isCnpjValid }) {
     _response = EditUserViewModel(
       isNaturalPerson: isNaturalPerson ?? anyBool(),
       showCpf: showCpf ?? anyBool(),
       showCnpj: showCnpj ?? anyBool(),
-      isCpfValid: showCnpj ?? anyBool(),
+      isCpfValid: isCpfValid ?? anyBool(),
+      isCnpjValid: isCnpjValid ?? anyBool(),
       cpf: cpf,
       cnpj: cnpj
     );
@@ -264,6 +268,20 @@ void main() {
     await tester.pump();
     expect(tester.cpfErrorFinder, findsNothing);
   });
+
+  testWidgets('should show CNPJ error', (tester) async {
+    loadUserData.modkResponse(showCnpj: true, isCnpjValid: false);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cnpjErrorFinder, findsOneWidget);
+  });
+
+  testWidgets('should hide CNPJ error', (tester) async {
+    loadUserData.modkResponse(showCnpj: true, isCnpjValid: true);
+    await tester.pumpWidget(sut);
+    await tester.pump();
+    expect(tester.cnpjErrorFinder, findsNothing);
+  });
 }
 
 extension EditUserPageExtension on WidgetTester {
@@ -274,6 +292,7 @@ extension EditUserPageExtension on WidgetTester {
   Finder get spinnerFinder => find.byType(CircularProgressIndicator);
   Finder get errorFinder => find.text('Erro');
   Finder get cpfErrorFinder => find.descendant(of: cpfFinder, matching: find.text('Valor inválido'));
+  Finder get cnpjErrorFinder => find.descendant(of: cnpjFinder, matching: find.text('Valor inválido'));
   RadioListTile get naturalPersonRadio => widget(naturalPersonFinder);
   RadioListTile get legalPersonRadio => widget(legalPersonFinder);
   TextFormField get cpfTextField => widget(cpfFinder);
